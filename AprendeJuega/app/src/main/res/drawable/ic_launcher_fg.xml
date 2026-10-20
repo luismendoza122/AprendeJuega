@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Libro abierto con una estrella (dibujo propio) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF" android:pathData="M30,44 Q42,38 53,44 L53,74 Q42,68 30,74 Z" />
+    <path android:fillColor="#FFE3A3" android:pathData="M55,44 Q66,38 78,44 L78,74 Q66,68 55,74 Z" />
+    <path android:fillColor="#FFB020" android:pathData="M54,22 L57.5,30.5 L66,31 L59.5,36.5 L61.5,45 L54,40.5 L46.5,45 L48.5,36.5 L42,31 L50.5,30.5 Z" />
+</vector>

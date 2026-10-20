@@ -1,0 +1,45 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.luis.aprendejuega'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.luis.aprendejuega"
+        minSdk 26
+        targetSdk 34
+        versionCode 3
+        versionName "2.0"
+    }
+
+    // Llave fija: así las próximas versiones se instalan encima sin borrar el progreso de los niños.
+    signingConfigs {
+        fija {
+            storeFile file('aprendejuega.keystore')
+            storePassword 'aprendejuega'
+            keyAlias 'aprendejuega'
+            keyPassword 'aprendejuega'
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.fija
+        }
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.fija
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+}

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Aprende y Juega</title>
+<style>
+:root{
+  --bg:#F4F1FF; --card:#FFFFFF; --ink:#1F1B3A; --muted:#6B6688; --line:#E3DEF7;
+  --p:#6C4BF4; --p2:#8E73FF; --ok:#1FA971; --bad:#E5484D; --warn:#F5A524;
+  --c1:#FF7A59; --c2:#FFB020; --c3:#2BB673; --c4:#1E9BF0; --c5:#8B5CF6; --c6:#EC4899;
+  --r:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px}
+button{font:inherit;border:0;cursor:pointer;border-radius:14px;padding:12px 16px;background:var(--p);color:#fff;font-weight:700}
+button.sec{background:#fff;color:var(--p);border:2px solid var(--line)}
+button.sm{padding:8px 12px;font-size:14px}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.45}
+input,select,textarea{font:inherit;padding:12px;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);width:100%}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff}
+header h1{font-size:18px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#back{background:rgba(255,255,255,.2);padding:8px 12px;display:none}
+#stars{background:rgba(255,255,255,.2);padding:6px 10px;border-radius:999px;font-weight:700}
+main{padding:14px;max-width:760px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(3,1fr)}}
+.tile{background:var(--card);border-radius:var(--r);padding:16px 12px;text-align:center;box-shadow:0 2px 0 var(--line);color:var(--ink);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tile .em{font-size:40px;width:64px;height:64px;border-radius:20px;display:grid;place-items:center}
+.tile small{font-weight:500;color:var(--muted);font-size:12px}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 2px 0 var(--line)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted)}
+h2{font-size:22px;margin:4px 0 10px}
+h3{margin:0 0 6px}
+.big{font-size:28px;font-weight:800}
+.opts{display:grid;gap:8px;margin-top:10px}
+.opts button{background:#fff;color:var(--ink);border:2px solid var(--line);text-align:left}
+.opts button.ok{background:#E3F8EE;border-color:var(--ok)}
+.opts button.bad{background:#FDE8E8;border-color:var(--bad)}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#EEE9FF;color:var(--p);font-weight:700;font-size:13px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;z-index:20;opacity:0;transition:.25s;pointer-events:none;max-width:90%;text-align:center}
+.toast.on{opacity:1}
+/* memoria */
+.mem{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mem div{aspect-ratio:1;border-radius:14px;background:var(--p);display:grid;place-items:center;font-size:32px;color:transparent;user-select:none}
+.mem div.up,.mem div.done{background:#fff;color:inherit;border:2px solid var(--line)}
+.mem div.done{background:#E3F8EE}
+/* puzzle */
+.puz{display:grid;gap:3px;background:var(--ink);padding:3px;border-radius:14px;touch-action:manipulation}
+.puz div{aspect-ratio:1;border-radius:8px;background-size:cover}
+.puz div.empty{background:var(--ink)!important}
+/* dibujo */
+#cv{width:100%;background:#fff;border-radius:14px;touch-action:none;display:block;border:2px solid var(--line)}
+.tools{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.tools button{background:#fff;color:var(--ink);border:2px solid var(--line);padding:8px 10px;font-size:14px}
+.tools button.on{border-color:var(--p);background:#EEE9FF}
+.sw{width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--line);padding:0}
+.sw.on{box-shadow:0 0 0 3px var(--p)}
+/* sopa */
+.sopa{display:grid;gap:2px;user-select:none;touch-action:none}
+.sopa div{aspect-ratio:1;display:grid;place-items:center;font-weight:800;background:#fff;border-radius:6px;font-size:clamp(12px,4vw,20px)}
+.sopa div.sel{background:#FFE7A3}
+.sopa div.f{color:#fff}
+.words span{display:inline-block;margin:3px;padding:4px 8px;border-radius:8px;background:#EEE9FF;font-weight:700;font-size:14px}
+.words span.f{text-decoration:line-through;opacity:.5}
+/* mascota */
+.pet{font-size:110px;text-align:center;line-height:1.1;transition:transform .3s}
+.pet.bounce{transform:scale(1.15) rotate(-6deg)}
+.bar{height:14px;background:#EEE;border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px}
+.stat{display:grid;grid-template-columns:110px 1fr 40px;gap:8px;align-items:center;margin:6px 0;font-size:14px}
+/* piano */
+.piano{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.piano button{height:120px;background:#fff;color:var(--ink);border:2px solid var(--line);display:flex;align-items:flex-end;justify-content:center;padding:6px;border-radius:10px}
+.piano button.hit{background:#EEE9FF}
+a.link{color:var(--p);font-weight:700;text-decoration:none}
+.lib{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.lib:first-of-type{border-top:0}
+.story p{line-height:1.6;font-size:17px}
+.rec{width:90px;height:90px;border-radius:50%;background:var(--bad);font-size:34px;display:grid;place-items:center;margin:8px auto}
+.rec.on{animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 14px rgba(229,72,77,.2)}}
+/* ===== v2.0: Inglés con Teacher Owl y juegos nuevos ===== */
+.owlb{display:flex;gap:10px;align-items:flex-start;margin-top:10px;text-align:left}
+.owli{font-size:40px;line-height:1;flex:none}
+.owlm{flex:1;min-width:0;background:#F3F0FF;border-radius:14px;border-top-left-radius:4px;padding:10px 12px;font-size:15px;line-height:1.45}
+.owlm button.sm{margin-top:6px}
+.enpic{line-height:1.15;margin:8px 0;font-weight:800;color:var(--p)}
+.engrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.enop{background:#fff;border:2px solid var(--line);color:var(--ink);padding:6px}
+.enop .enpic{margin:4px 0}
+.enop.ok,.opts button.ok{background:#E3F8EE;border-color:var(--ok)}
+.enop.bad{background:#FDE8E8;border-color:var(--bad)}
+.diff{font-size:28px;font-weight:800;letter-spacing:3px;min-height:40px;margin-top:8px}
+.armada{min-height:56px;margin:12px 0;padding:10px;border:2px dashed var(--line);border-radius:14px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center}
+.fichas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ficha{display:inline-block;background:#fff;color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:800;font-size:18px}
+.ficha.on{background:#EEE9FF;border-color:var(--p)}
+.ficha:disabled{opacity:.25}
+.micbtn{width:96px;height:96px;border-radius:50%;font-size:22px;background:var(--bad);margin:6px auto;display:grid;place-items:center}
+.rec-on{animation:pulse 1s infinite}
+.chatbox{height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:8px;background:var(--bg);border-radius:14px}
+.msg{max-width:85%;padding:9px 12px;border-radius:14px;line-height:1.4;overflow-wrap:anywhere}
+.msg.owl{background:#fff;align-self:flex-start;border-top-left-radius:4px}
+.msg.yo{background:var(--p);color:#fff;align-self:flex-end;border-top-right-radius:4px}
+.plata{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+.moneda{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:#3b2f00;box-shadow:inset 0 0 0 4px rgba(0,0,0,.12)}
+.billete{padding:14px 12px;border-radius:8px;font-weight:800;color:#1F1B3A;box-shadow:inset 0 0 0 3px rgba(0,0,0,.12);min-width:96px;text-align:center}
+.schulte{display:grid;gap:6px;max-width:360px;margin:12px auto}
+.schulte button{aspect-ratio:1;font-size:22px;background:#fff;color:var(--ink);border:2px solid var(--line);padding:0}
+.schulte button.ok{background:#E3F8EE;border-color:var(--ok);color:var(--ok)}
+.schulte button.bad{background:#FDE8E8}
+.difgrid{display:grid;gap:4px;max-width:380px;margin:12px auto}
+.difgrid button{aspect-ratio:1;background:#fff;border:2px solid var(--line);padding:0;font-size:inherit;line-height:1}
+.dpad{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:10px}
+.dpad div{display:flex;gap:60px}
+.dpad button{font-size:26px;width:64px;height:56px;padding:0;background:#fff;border:2px solid var(--line)}
+</style>
+</head>
+<body>
+<header>
+  <button id="back" onclick="go('home')">← Volver</button>
+  <h1 id="title">Aprende y Juega</h1>
+  <button id="mute" class="sm" style="background:rgba(255,255,255,.2);padding:6px 10px" onclick="toggleMute()">🔊</button>
+  <span id="stars">⭐ 0</span>
+</header>
+<main id="view"></main>
+<div class="toast" id="toast"></div>
+<script src="sfx.js"></script>
+<script src="data.js"></script>
+<script src="songs.js"></script>
+<script src="app.js"></script>
+<script src="juegos2.js"></script>
+<script src="karaoke.js"></script>
+<script src="ingles-datos.js"></script>
+<script src="ingles.js"></script>
+<script src="juegos3.js"></script>
+</body>
+</html>
