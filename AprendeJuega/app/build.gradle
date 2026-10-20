@@ -10,8 +10,8 @@ android {
         applicationId "com.luis.aprendejuega"
         minSdk 26
         targetSdk 34
-        versionCode 3
-        versionName "2.0"
+        versionCode 4
+        versionName "2.1"
     }
 
     // Llave fija: así las próximas versiones se instalan encima sin borrar el progreso de los niños.

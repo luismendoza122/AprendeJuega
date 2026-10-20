@@ -20,10 +20,10 @@ function speakEn(text, lento) {
   } else toast('Tu teléfono no tiene lectura en voz alta');
 }
 const puedeEscuchar = () => hasAndroid() && Android.canListen && Android.canListen();
-function escucharEn(alOir, alFallar) {
+function escucharEn(alOir, alFallar, idioma = 'en-US') {
   window.onVozResultado = json => { let l = []; try { l = JSON.parse(json); } catch (e) {} alOir(l); };
   window.onVozError = msg => alFallar(msg || 'No te escuché bien');
-  try { Android.listen('en-US'); } catch (e) { alFallar('No se pudo usar el micrófono'); }
+  try { Android.listen(idioma); } catch (e) { alFallar('No se pudo usar el micrófono'); }
 }
 
 // ---------- Memoria de Teacher Owl (repaso espaciado) ----------
@@ -56,7 +56,7 @@ const PROG = {
     if (typeof val === 'number') all[u][act] = Math.max(all[u][act] || 0, val); else all[u][act] = val;
     store.set('en_prog', all);
   },
-  estrellasTema(u) { const p = this.get(u); return ['escucha', 'escribe', 'habla', 'frases'].reduce((s, a) => s + (p[a] || 0), 0) + (p.examen >= 80 ? 3 : 0); }
+  estrellasTema(u) { const p = this.get(u); return ['escucha', 'escribe', 'habla', 'conversa', 'frases'].reduce((s, a) => s + (p[a] || 0), 0) + (p.examen >= 80 ? 3 : 0); }
 };
 
 // ---------- El cerebro de Teacher Owl ----------
@@ -100,18 +100,18 @@ const OWL = {
   pistas(escrito, palabra) {
     const t = [];
     const tiene = (p) => palabra.includes(p) && !escrito.includes(p);
-    if (tiene('th')) t.push('«th» se escribe con t y h juntas: three, mother, the.');
-    if (tiene('ee')) t.push('El sonido «i» largo muchas veces se escribe «ee»: green, three, sheep.');
-    if (tiene('ea')) t.push('Aquí el sonido «i» se escribe «ea»: eat, read, beach.');
-    if (tiene('oo')) t.push('«oo» suena como «u»: book, school, foot.');
-    if (tiene('sh')) t.push('«sh» suena como cuando pides silencio: shirt, fish, shoes.');
-    if (tiene('gh')) t.push('«gh» casi no suena, ¡pero sí se escribe!: eight, night, light.');
-    if (tiene('wh') || (palabra.startsWith('wr') && !escrito.startsWith('wr'))) t.push('Aquí la «w» se escribe aunque no suene mucho: write, white.');
-    if (tiene('ph')) t.push('«ph» suena como «f», pero se escribe con p y h: elephant, phone.');
-    if (tiene('ck')) t.push('Después de una vocal corta el sonido «k» se escribe «ck»: duck, black, jacket.');
-    if (/y/.test(palabra) && escrito.includes(palabra.replace(/y/g, 'i'))) t.push('Aquí va «y», no «i»: yellow, monkey, happy.');
-    if (palabra.endsWith('e') && escrito === palabra.slice(0, -1)) t.push('Termina en una «e» que no suena: five, nose, orange.');
-    if (/(.)\1/.test(palabra) && escrito === palabra.replace(/(.)\1/, '$1')) t.push('Lleva una letra doble: ' + palabra.match(/(.)\1/)[0] + ' (como en apple, rabbit, green).');
+    if (tiene('th')) t.push('«th» se escribe con t y h juntas: {three}, {mother}, {the}.');
+    if (tiene('ee')) t.push('El sonido «i» largo muchas veces se escribe «ee»: {green}, {three}, {sheep}.');
+    if (tiene('ea')) t.push('Aquí el sonido «i» se escribe «ea»: {eat}, {read}, {beach}.');
+    if (tiene('oo')) t.push('«oo» suena como «u»: {book}, {school}, {foot}.');
+    if (tiene('sh')) t.push('«sh» suena como cuando pides silencio: {shirt}, {fish}, {shoes}.');
+    if (tiene('gh')) t.push('«gh» casi no suena, ¡pero sí se escribe!: {eight}, {night}, {light}.');
+    if (tiene('wh') || (palabra.startsWith('wr') && !escrito.startsWith('wr'))) t.push('Aquí la «w» se escribe aunque no suene mucho: {write}, {white}.');
+    if (tiene('ph')) t.push('«ph» suena como «f», pero se escribe con p y h: {elephant}, {phone}.');
+    if (tiene('ck')) t.push('Después de una vocal corta el sonido «k» se escribe «ck»: {duck}, {black}, {jacket}.');
+    if (/y/.test(palabra) && escrito.includes(palabra.replace(/y/g, 'i'))) t.push('Aquí va «y», no «i»: {yellow}, {monkey}, {happy}.');
+    if (palabra.endsWith('e') && escrito === palabra.slice(0, -1)) t.push('Termina en una «e» que no suena: {five}, {nose}, {orange}.');
+    if (/(.)\1/.test(palabra) && escrito === palabra.replace(/(.)\1/, '$1')) t.push('Lleva una letra doble: ' + palabra.match(/(.)\1/)[0] + ' (como en {apple}, {rabbit}, {green}).');
     return t;
   },
 
@@ -121,17 +121,17 @@ const OWL = {
     const html = [], msgs = [];
     if (!escrito) return {ok: false, casi: false, html: '', msgs: ['Escribe la palabra en inglés 😉']};
     if (opciones.includes(escrito)) {
-      if (/^[A-Z]/.test(p.en) && escritoOriginal.trim()[0] !== p.en[0]) msgs.push(`Recuerda: «${p.en}» se escribe con mayúscula.`);
+      if (/^[A-Z]/.test(p.en) && escritoOriginal.trim()[0] !== p.en[0]) msgs.push(`Recuerda: «{${p.en}}» se escribe con mayúscula.`);
       return {ok: true, html: `<b style="color:var(--ok)">${esc(escritoOriginal.trim())}</b>`, msgs};
     }
     if (opciones.includes(escrito.replace(/ /g, '')) || opciones.map(o => o.replace(/ /g, '')).includes(escrito.replace(/ /g, ''))) {
-      return {ok: true, html: `<b style="color:var(--ok)">${esc(p.en)}</b>`, msgs: [`Ojo con los espacios: se escribe «${p.en}».`]};
+      return {ok: true, html: `<b style="color:var(--ok)">${esc(p.en)}</b>`, msgs: [`Ojo con los espacios: se escribe «{${p.en}}».`]};
     }
     if (norm(escrito) === norm(p.es) || p.es.split(' o ').some(x => norm(x) === norm(escrito))) {
       return {ok: false, casi: false, html: esc(escrito), msgs: [`«${escrito}» es en español 😉. Escríbelo en inglés.`]};
     }
     const otra = todasPalabras().find(x => normEn(x.en) === escrito);
-    if (otra) return {ok: false, casi: false, html: esc(escrito), msgs: [`«${otra.en}» es otra palabra: significa «${otra.es}» ${otra.e}. Buscamos la de ${p.e}.`]};
+    if (otra) return {ok: false, casi: false, html: esc(escrito), msgs: [`«{${otra.en}}» es otra palabra: significa «${otra.es}» ${otra.e}. Buscamos la de ${p.e}.`]};
 
     const objetivo = opciones.reduce((m, o) => lev(escrito, o)[escrito.length][o.length] < lev(escrito, m)[escrito.length][m.length] ? o : m, opciones[0]);
     const ps = pasos(escrito, objetivo), errores = ps.filter(x => x.t !== 'ok');
@@ -164,13 +164,13 @@ const OWL = {
       const ow = o.split(' '), f = palabras.filter(w => !ow.includes(w));
       if (f.length < faltan.length) { faltan = f; mejor = o; }
     }
-    const msgs = [`Te escuché: «${mejor}»`];
-    if (palabras.length > 1 && faltan.length && faltan.length < palabras.length) msgs.push(`Te faltó decir bien: «${faltan.join(' ')}».`);
+    const msgs = [`Te escuché: «{${mejor}}»`];
+    if (palabras.length > 1 && faltan.length && faltan.length < palabras.length) msgs.push(`Te faltó decir bien: «{${faltan.join(' ')}}».`);
     const d = lev(mejor, meta)[mejor.length][meta.length], sim = 1 - d / Math.max(meta.length, mejor.length);
     if (meta.includes('th') && !mejor.includes('th')) msgs.push('Para «th» pon la punta de la lengua entre los dientes y sopla suave.');
-    if (/^s[^aeiou]/.test(meta) && /^(e|i)s/.test(mejor)) msgs.push(`No digas «es» al comienzo: es «${meta.split(' ')[0]}», directo con la s.`);
+    if (/^s[^aeiou]/.test(meta) && /^(e|i)s/.test(mejor)) msgs.push(`No digas «es» al comienzo: es «{${meta.split(' ')[0]}}», directo con la s.`);
     if (meta.includes('v') && mejor.includes('b') && !meta.includes('b')) msgs.push('La «v» en inglés se hace con los dientes de arriba tocando el labio de abajo.');
-    if (/^h/.test(meta) && !/^h/.test(mejor)) msgs.push('La «h» en inglés suena como una «j» suave: hello, house.');
+    if (/^h/.test(meta) && !/^h/.test(mejor)) msgs.push('La «h» en inglés suena como una «j» suave: {hello}, {house}.');
     if (palabras.length === 1 && /[dtkgs]$/.test(meta) && mejor.length < meta.length && meta.startsWith(mejor.slice(0, -1))) msgs.push(`No olvides el sonido del final: «…${meta.slice(-2)}».`);
     return {ok: false, casi: sim >= .7 || faltan.length === 1, oido: mejor, msgs};
   },
@@ -182,19 +182,57 @@ const OWL = {
     let k = 0; while (k < armada.length && armada[k] === c[k]) k++;
     const msgs = [];
     if (armada.length < c.length) msgs.push(`Te faltan ${c.length - armada.length} palabra(s).`);
-    else if (k === 0) msgs.push(`La frase empieza con «${c[0]}».`);
-    else msgs.push(`Vas bien hasta «${c.slice(0, k).join(' ')}». Después va otra palabra.`);
-    if (c.indexOf('not') > 0 || c.includes('do')) msgs.push('Para negar en inglés: I do not like = no me gusta.');
+    else if (k === 0) msgs.push(`La frase empieza con «{${c[0]}}».`);
+    else msgs.push(`Vas bien hasta «{${c.slice(0, k).join(' ')}}». Después va otra palabra.`);
+    if (c.indexOf('not') > 0 || c.includes('do')) msgs.push('Para negar en inglés: {I do not like} = no me gusta.');
     return {ok: false, k, msgs};
   }
 };
 
 // Burbuja de Teacher Owl
-function owl(html, tipo) {
+// {palabra} en un mensaje = palabra en inglés (se ve en negrita y se lee con voz inglesa)
+const marcarIngles = h => String(h).replace(/\{([^{}<>]+)\}/g, '<b>$1</b>');
+function owl(html, tipo, op = {}) {
   const el = $('#owl'); if (!el) return;
   const color = tipo === 'ok' ? '#E3F8EE' : tipo === 'bad' ? '#FFF4E0' : '#F3F0FF';
   el.style.background = color;
-  el.innerHTML = html;
+  el.innerHTML = marcarIngles(html);
+  if (!op.mudo) owlHabla(el.innerHTML, op.despues, op.lento);
+}
+
+// ---------- Teacher Owl habla en español (y dice las palabras en inglés con voz inglesa) ----------
+const OWL_VOZ = {
+  on() { return store.get('owl_voz', true); },
+  cambiar() { store.set('owl_voz', !this.on()); return this.on(); }
+};
+function textoParaVoz(h) {
+  return String(h).replace(/<button[\s\S]*?<\/button>/g, ' ').replace(/<br\s*\/?>/g, '. ').replace(/<[^>]+>/g, ' ')
+    .replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{200D}]/gu, ' ').replace(/[«»“”"]/g, '')
+    .replace(/_( _)*/g, ' ').replace(/=/g, ', ').replace(/\s+([.,:;!?])/g, '$1').replace(/([.!?])\.+/g, '$1').replace(/\s+/g, ' ').replace(/^[,.\s]+/, '').trim();
+}
+function hablarSecuencia(segs) {
+  segs = segs.filter(x => x.t && /[\p{L}\d]/u.test(x.t));
+  if (!segs.length) return;
+  if (hasAndroid() && Android.speakSeq) { Android.speakSeq(JSON.stringify(segs)); return; }
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const voces = speechSynthesis.getVoices();
+  for (const x of segs) {
+    const u = new SpeechSynthesisUtterance(x.t); u.lang = x.l; u.rate = x.v;
+    const v = voces.find(y => y.lang.replace('_', '-').toLowerCase() === x.l.toLowerCase()) || voces.find(y => y.lang.slice(0, 2) === x.l.slice(0, 2));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  }
+}
+function owlHabla(html, despues, lento) {
+  if (!OWL_VOZ.on()) { if (despues) speakEn(despues, lento); return; }
+  const segs = [];
+  String(html).replace(/<button[\s\S]*?<\/button>/g, ' ').split(/(<b(?:\s[^>]*)?>[\s\S]*?<\/b>)/).forEach(parte => {
+    const en = /^<b[\s>]/.test(parte), t = textoParaVoz(parte);
+    if (t) segs.push({t, l: en ? 'en-US' : 'es-CO', v: en ? .85 : 1});
+  });
+  if (despues) segs.push({t: despues, l: 'en-US', v: lento ? .6 : .85});
+  hablarSecuencia(segs);
 }
 const owlBox = (txt) => `<div class="owlb"><div class="owli">🦉</div><div class="owlm" id="owl">${txt}</div></div>`;
 
@@ -208,23 +246,75 @@ R.ingles = function () {
         <button onclick="enRepaso()">📝 Repaso del día${pend ? ` (${pend})` : ''}</button>
         <button class="sec" onclick="enChat()">💬 Pregúntale</button>
         <button class="sec" onclick="enProgreso()">🏅 Mi progreso</button>
+        <button class="sec" id="vozowl" onclick="this.textContent = OWL_VOZ.cambiar() ? '🔊 Búho habla: Sí' : '🔇 Búho habla: No'">${OWL_VOZ.on() ? '🔊 Búho habla: Sí' : '🔇 Búho habla: No'}</button>
       </div>
     </div>
     <div class="grid">${INGLES.map(u => {
       const st = PROG.estrellasTema(u.id), ex = PROG.get(u.id).examen;
       return `<button class="tile" onclick="enTema('${u.id}')"><span class="em" style="background:${u.c}">${u.e}</span>${u.t}<small>${u.es} · ${ex >= 80 ? '🏅' : '⭐ ' + st}</small></button>`;
     }).join('')}</div>`;
+  if (!window.__owlSaludo) { window.__owlSaludo = 1; owlHabla(`<b>Hello!</b> Soy Teacher Owl, tu profe de inglés. ${pend ? 'Hoy tienes ' + pend + ' palabras para repasar.' : '¿Qué quieres aprender hoy?'}`); }
 };
+
+// ---------- Conversa con Owl: te pregunta en español y respondes en inglés ----------
+function en_conversa(id) {
+  limpiar();
+  const u = INGLES.find(x => x.id === id), items = shuffle(u.palabras).slice(0, Math.min(6, u.palabras.length)).map(p => ({...p, u: id}));
+  const voz = puedeEscuchar();
+  let i = 0, ok = 0, intentos = 0;
+  function pintar() {
+    const p = items[i]; intentos = 0;
+    const pregunta = `¿Cómo se dice «${esc(p.es)}» en inglés?`;
+    view.innerHTML = `<div class="card" style="text-align:center"><div class="pill">${i + 1} / ${items.length} · ✅ ${ok}</div>
+      ${tarjeta(p, true)}<div class="big" style="font-size:24px">${pregunta}</div>
+      ${voz ? `<button id="mic" class="micbtn">🎤 Responder</button>`
+            : `<input id="resp" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Escribe en inglés" style="text-align:center;font-size:22px;margin-top:8px"><p><button id="rev">✔ Responder</button></p>`}
+      ${owlBox(pregunta)}
+      <div class="row" style="justify-content:space-between;margin-top:10px"><button class="sec sm" id="rep">🔁 Repetir pregunta</button><button class="sec sm" id="saltar">Saltar ▶</button></div></div><p>${backTema(id)}</p>`;
+    owlHabla(pregunta);
+    $('#rep').onclick = () => owlHabla(pregunta);
+    const sig = () => { i++; i < items.length ? pintar() : finActividad(id, 'conversa', ok, items.length); };
+    const resultado = (bien, msgs) => {
+      intentos++;
+      if (bien) {
+        SFX.ok(); if (intentos === 1) ok++; SRS.marcar(p, intentos === 1);
+        owl(`${OWL.azar(OWL.bien)} «${esc(p.es)}» en inglés es <b>${esc(p.en)}</b>.`, 'ok');
+        setTimeout(() => $('#saltar') && sig(), 3200);
+      } else if (intentos >= 3) {
+        SFX.bad(); SRS.marcar(p, false);
+        owl(`Se dice <b>${esc(p.en)}</b>. Repítelo conmigo y la practicamos en tu repaso 📝`, 'bad', {despues: p.en, lento: true});
+        setTimeout(() => $('#saltar') && sig(), 4500);
+      } else { SFX.bad(); owl(`${OWL.azar(OWL.animo)}<br>${msgs.map(esc).join('<br>')}`, 'bad'); }
+    };
+    $('#saltar').onclick = () => { SRS.marcar(p, false); sig(); };
+    if (voz) $('#mic').onclick = () => {
+      stopSpeak(); const b = $('#mic'); b.disabled = true; b.textContent = '👂 Te escucho…'; b.classList.add('rec-on');
+      owl('Dilo en inglés…', '', {mudo: true});
+      escucharEn(oidos => {
+        b.disabled = false; b.textContent = '🎤 Responder'; b.classList.remove('rec-on');
+        // Si respondió en español, Owl se lo dice
+        if (oidos.some(o => norm(o) === norm(p.es))) return resultado(false, [`«${p.es}» es en español 😉. ¿Cómo se dice en inglés?`]);
+        const r = OWL.revisarVoz(oidos, p.en); resultado(r.ok, r.msgs);
+      }, msg => { b.disabled = false; b.textContent = '🎤 Responder'; b.classList.remove('rec-on'); owl(esc(msg) + '. Intenta otra vez.', 'bad'); });
+    };
+    else {
+      const resp = () => { const r = OWL.revisarEscritura($('#resp').value, p); resultado(r.ok, r.msgs); };
+      $('#rev').onclick = resp; $('#resp').onkeydown = e => { if (e.key === 'Enter') resp(); };
+    }
+  }
+  pintar();
+}
 
 function enTema(id) {
   limpiar();
-  const u = INGLES.find(x => x.id === id), act = u.solo || ['aprender', 'escucha', 'escribe', 'habla', 'frases', 'examen'];
+  const u = INGLES.find(x => x.id === id), act = u.solo || ['aprender', 'escucha', 'escribe', 'habla', 'conversa', 'frases', 'examen'];
   const p = PROG.get(id);
   const A = {
     aprender: ['📖', 'Aprende', 'Mira, escucha y repite', p.aprender ? '✔' : ''],
     escucha: ['👂', 'Escucha y elige', 'Toca el dibujo correcto', p.escucha ? '⭐'.repeat(p.escucha) : ''],
     escribe: ['✍️', 'Escribe', 'Teacher Owl te corrige', p.escribe ? '⭐'.repeat(p.escribe) : ''],
     habla: ['🎤', 'Habla', 'Di la palabra en voz alta', p.habla ? '⭐'.repeat(p.habla) : ''],
+    conversa: ['🗣️', 'Conversa con Owl', 'Te pregunta en español', p.conversa ? '⭐'.repeat(p.conversa) : ''],
     frases: ['🧱', 'Arma la frase', 'Ordena las palabras', p.frases ? '⭐'.repeat(p.frases) : ''],
     examen: ['🏆', 'Examen', 'Gana tu medalla', p.examen != null ? p.examen + '%' : '']
   };
@@ -278,7 +368,7 @@ function en_aprender(id) {
 // Pronunciación con el micrófono (usada en Aprende y Habla)
 function practicarVoz(p, boton, alTerminar) {
   boton.disabled = true; boton.textContent = '👂 Te escucho…'; boton.classList.add('rec-on');
-  owl('Habla ahora: <b>' + esc(p.en) + '</b>');
+  owl('Habla ahora: <b>' + esc(p.en) + '</b>', '', {mudo: true});
   escucharEn(oidos => {
     boton.disabled = false; boton.textContent = '🎤 Otra vez'; boton.classList.remove('rec-on');
     const r = OWL.revisarVoz(oidos, p.en);
@@ -315,7 +405,7 @@ function en_escucha(id) {
         setTimeout(() => { if (!$('#oir')) return; i++; i < ronda.length ? pintar() : finActividad(id, 'escucha', ok, ronda.length); }, 1300);
       } else {
         b.classList.add('bad'); b.disabled = true; SFX.bad(); fallo = true;
-        owl(`Ese es <b>${esc(o.en)}</b> (${esc(o.es)}). Escucha otra vez 👂`, 'bad'); speakEn(p.en, true);
+        owl(`Ese es <b>${esc(o.en)}</b> (${esc(o.es)}). Escucha otra vez 👂`, 'bad', {despues: p.en, lento: true});
       }
     });
   }
@@ -352,7 +442,7 @@ function en_escribe(id, lista) {
       $('#diff').innerHTML = r.html;
       if (r.ok) {
         SFX.ok(); if (intento === 0) ok++; SRS.marcar(p, intento === 0);
-        owl(`${OWL.azar(OWL.bien)} ${r.msgs.map(esc).join(' ')}`, 'ok'); speakEn(p.en);
+        owl(`${OWL.azar(OWL.bien)} ${r.msgs.map(esc).join(' ')}`, 'ok', {despues: p.en});
         $('#rev').disabled = true; inp.disabled = true;
         setTimeout(() => { if (!$('#rev')) return; i++; i < ronda.length ? pintar() : terminar(); }, 1600);
         return;
@@ -360,8 +450,8 @@ function en_escribe(id, lista) {
       intento++; SFX.bad();
       if (intento >= 3) {
         SRS.marcar(p, false);
-        owl(`Se escribe <b>${esc(p.en)}</b>. La guardo en tu repaso para practicarla otra vez 📝`, 'bad');
-        $('#diff').innerHTML = `<b style="color:var(--ok)">${esc(p.en)}</b>`; speakEn(p.en, true);
+        owl(`Se escribe <b>${esc(p.en)}</b>. La guardo en tu repaso para practicarla otra vez 📝`, 'bad', {despues: p.en, lento: true});
+        $('#diff').innerHTML = `<b style="color:var(--ok)">${esc(p.en)}</b>`;
         $('#rev').textContent = 'Siguiente ▶'; $('#rev').onclick = () => { i++; i < ronda.length ? pintar() : terminar(); };
         return;
       }
@@ -426,7 +516,7 @@ function en_frases(id) {
     $('#rev').onclick = () => {
       const r = OWL.revisarFrase(armada.map(x => x.w), f.en);
       if (r.ok) {
-        SFX.ok(); if (!fallo) ok++; owl(`${OWL.azar(OWL.bien)} «${esc(f.en)}» = «${esc(f.es)}»`, 'ok'); speakEn(f.en);
+        SFX.ok(); if (!fallo) ok++; owl(`${OWL.azar(OWL.bien)} «<b>${esc(f.en)}</b>» = «${esc(f.es)}»`, 'ok');
         $('#rev').disabled = true;
         setTimeout(() => { if (!$('#rev')) return; i++; i < ronda.length ? pintar() : finActividad(id, 'frases', ok, ronda.length); }, 2200);
       } else {
@@ -510,20 +600,28 @@ function enChat() {
   const hist = [];
   view.innerHTML = `<div class="card"><h2>💬 Pregúntale a Teacher Owl</h2>
     <div id="chat" class="chatbox"></div>
-    <div class="row" style="flex-wrap:nowrap;margin-top:8px"><input id="pq" placeholder="Ej: ¿cómo se dice perro?" autocomplete="off"><button id="env">Enviar</button></div>
+    <div class="row" style="flex-wrap:nowrap;margin-top:8px">${puedeEscuchar() ? '<button class="sec" id="pmic" aria-label="Preguntar hablando">🎤</button>' : ''}<input id="pq" placeholder="Ej: ¿cómo se dice perro?" autocomplete="off"><button id="env">Enviar</button></div>
     <div class="row" style="margin-top:8px">${['¿Cómo se dice gato?', '¿Qué significa yellow?', 'Deletrea elephant', 'Dime una frase', '¿Qué palabras me cuestan?'].map(s => `<button class="sec sm sug">${s}</button>`).join('')}</div>
     </div><p>${enTemas()}</p>`;
   const caja = $('#chat');
   const decir = (quien, html) => { caja.insertAdjacentHTML('beforeend', `<div class="msg ${quien}">${quien === 'owl' ? '🦉 ' : ''}${html}</div>`); caja.scrollTop = caja.scrollHeight; };
-  decir('owl', 'Hello! Pregúntame cómo se dice una palabra en inglés, qué significa, o pídeme que deletree. Conozco ' + todasPalabras().length + ' palabras.');
+  const saludo = `<b>Hello!</b> Pregúntame cómo se dice una palabra en inglés, qué significa, o pídeme que deletree.${puedeEscuchar() ? ' También me puedes preguntar hablando: toca el micrófono 🎤.' : ''}`;
+  decir('owl', saludo); owlHabla(saludo);
   const responder = q => {
     decir('yo', esc(q));
     const r = OWL_CHAT(q);
-    setTimeout(() => { decir('owl', r.html); if (r.voz) speakEn(r.voz); }, 350);
+    setTimeout(() => { decir('owl', r.html); if (OWL_VOZ.on()) owlHabla(r.html); else if (r.voz) speakEn(r.voz); }, 350);
   };
   $('#env').onclick = () => { const q = $('#pq').value.trim(); if (q) { $('#pq').value = ''; responder(q); } };
   $('#pq').onkeydown = e => { if (e.key === 'Enter') $('#env').click(); };
   view.querySelectorAll('.sug').forEach(b => b.onclick = () => responder(b.textContent));
+  const mic = $('#pmic');
+  if (mic) mic.onclick = () => {
+    stopSpeak(); mic.disabled = true; mic.textContent = '👂'; mic.classList.add('rec-on');
+    const listo = () => { mic.disabled = false; mic.textContent = '🎤'; mic.classList.remove('rec-on'); };
+    escucharEn(oidos => { listo(); if (oidos[0]) responder(oidos[0]); else decir('owl', 'No te escuché. Toca 🎤 y habla cerca del teléfono.'); },
+      msg => { listo(); decir('owl', esc(msg) + '. Puedes escribir tu pregunta.'); }, 'es-CO');
+  };
 }
 
 function OWL_CHAT(q) {

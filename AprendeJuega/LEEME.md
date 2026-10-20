@@ -1,4 +1,11 @@
-# Aprende y Juega 2.0
+# Aprende y Juega 2.1
+
+## Novedades de la versión 2.1
+- **Teacher Owl habla en español**: lee en voz alta sus explicaciones y correcciones en español, y dice las palabras
+  en inglés con voz inglesa. Se puede apagar con el botón «🔊 Búho habla» en la pantalla de Inglés.
+- **Conversa con Owl** 🗣️ (nueva actividad en cada tema): el búho pregunta en voz alta en español
+  («¿Cómo se dice tres en inglés?») y el niño responde hablando en inglés.
+- **Pregúntale por voz**: en el chat hay un micrófono para preguntarle en español («¿cómo se dice perro?»).
 
 App educativa para niños de 6 a 12 años. Casi todo funciona sin internet.
 

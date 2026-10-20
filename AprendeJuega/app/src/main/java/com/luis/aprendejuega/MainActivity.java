@@ -14,6 +14,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
@@ -28,6 +29,7 @@ import androidx.webkit.WebViewAssetLoader;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -52,6 +54,10 @@ public class MainActivity extends Activity {
     private PermissionRequest pendingMic;
     private SpeechRecognizer reconocedor;
     private String idiomaPendiente;
+    // Cola de frases con idioma propio (Teacher Owl habla español y dice las palabras en inglés)
+    private final ArrayList<String[]> cola = new ArrayList<>();
+    private int posCola = 0;
+    private volatile int turnoCola = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +129,15 @@ public class MainActivity extends Activity {
                 ttsListo = true;
                 ponerIdioma("es-CO");
                 tts.setSpeechRate(0.95f);
+                tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override public void onStart(String id) { }
+                    @Override public void onError(String id) { onDone(id); }
+                    @Override
+                    public void onDone(String id) {
+                        if (id == null || !id.startsWith("cola" + turnoCola + "_")) return;
+                        runOnUiThread(() -> siguienteDeCola());
+                    }
+                });
             }
         });
 
@@ -214,6 +229,18 @@ public class MainActivity extends Activity {
         reconocedor.startListening(i);
     }
 
+    private void siguienteDeCola() {
+        String[] x;
+        synchronized (cola) {
+            if (tts == null || posCola >= cola.size()) return;
+            x = cola.get(posCola);
+            posCola++;
+        }
+        ponerIdioma(x[1]);
+        try { tts.setSpeechRate(Float.parseFloat(x[2])); } catch (Exception e) { tts.setSpeechRate(1f); }
+        tts.speak(x[0], TextToSpeech.QUEUE_FLUSH, null, "cola" + turnoCola + "_" + posCola);
+    }
+
     private void enviarError(String msg) {
         web.evaluateJavascript("window.onVozError && window.onVozError(" + JSONObject.quote(msg) + ")", null);
     }
@@ -277,8 +304,35 @@ public class MainActivity extends Activity {
             hablar(text, idioma, velocidad);
         }
 
+        /** Lee varias frases seguidas, cada una en su idioma: [{"t":"texto","l":"es-CO","v":1}, ...] */
+        @JavascriptInterface
+        public void speakSeq(String json) {
+            ArrayList<String[]> nueva = new ArrayList<>();
+            try {
+                JSONArray arr = new JSONArray(json);
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject o = arr.getJSONObject(i);
+                    nueva.add(new String[]{o.optString("t"), o.optString("l", "es-CO"), String.valueOf(o.optDouble("v", 1))});
+                }
+            } catch (JSONException e) {
+                return;
+            }
+            runOnUiThread(() -> {
+                if (tts == null) return;
+                tts.stop();
+                synchronized (cola) {
+                    turnoCola++;
+                    cola.clear();
+                    cola.addAll(nueva);
+                    posCola = 0;
+                }
+                siguienteDeCola();
+            });
+        }
+
         @JavascriptInterface
         public void stopSpeak() {
+            synchronized (cola) { turnoCola++; cola.clear(); }
             if (tts != null) tts.stop();
         }
 
@@ -294,6 +348,7 @@ public class MainActivity extends Activity {
 
         private void hablar(String text, String idioma, float velocidad) {
             if (tts == null || text == null) return;
+            synchronized (cola) { turnoCola++; cola.clear(); }
             tts.stop();
             ponerIdioma(idioma);
             tts.setSpeechRate(velocidad);
